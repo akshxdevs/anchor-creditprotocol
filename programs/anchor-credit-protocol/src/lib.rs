@@ -15,8 +15,18 @@ declare_id!("3hCQwkaJM5ePHyT2YDnCxE5K8DT1WpucB16yuJnMcpde");
 #[program]
 pub mod anchor_credit_protocol {
     use super::*;
-
-    pub fn initialize(
+    pub fn deposite(
+        ctx: Context<Deposit>,
+        amount:u64,
+        collateral_type:CollateralType,
+    ) -> Result<()>{
+        ctx.accounts.deposit(
+            amount, 
+            collateral_type
+        )?;
+        Ok(())
+    }
+    pub fn initialize_loan(
         ctx: Context<Initialize>,
         principal: u64,
         interest_bps: u16,
@@ -37,15 +47,5 @@ pub mod anchor_credit_protocol {
         Ok(())
     }
 
-    pub fn deposite(
-        ctx: Context<Deposit>,
-        amount:u64,
-        collateral_type:CollateralType,
-    ) -> Result<()>{
-        ctx.accounts.deposit(
-            amount, 
-            collateral_type
-        )?;
-        Ok(())
-    }
+
 }
