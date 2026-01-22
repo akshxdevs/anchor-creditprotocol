@@ -1,7 +1,7 @@
 use anchor_lang::prelude::*;
 use anchor_spl::{
     associated_token::AssociatedToken,
-    token::{Mint, Token, TokenAccount},
+    token::{self,Mint, Token, TokenAccount, Transfer},
 };
 
 use crate::{CollateralType, CreditError, Escrow, Loan};
@@ -62,6 +62,23 @@ impl<'info> Deposit<'info> {
             .checked_add(amount)
             .ok_or(CreditError::AmountOverflow)?;
         self.loan.collateral_type = collateral_type;
+
+        let cpi_program = self.system_program.to_account_info();
+        let cpi_accounts = Transfer{ 
+            from:self.escrow.to_account_info(),
+            to: self.user.to_account_info(),
+            authority: self.escrow.to_account_info()
+        };
+        let user_key = self.user.key();
+        let seeds: &[&[u8]] = &[
+            b"escrow",
+            user_key.as_ref(),
+            &[self.escrow.bump],
+        ];
+
+        let signer_seeds = &[&seeds[..]];
+        let ctx = CpiContext::new_with_signer(cpi_program, cpi_accounts,signer_seeds);
+        token::transfer(ctx, amount)?;
 
         Ok(())
     }

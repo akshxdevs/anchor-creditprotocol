@@ -6,7 +6,7 @@ pub mod instructions;
 pub mod states;
 
 pub use error::*;
-pub use event::*;
+// pub use event::*;
 pub use instructions::*;
 pub use states::*;
 
@@ -26,13 +26,25 @@ pub mod anchor_credit_protocol {
         existing_user: bool,
     ) -> Result<()> {
         msg!("Greetings from: {:?}", ctx.program_id);
-        ctx.accounts.initialize(
+        ctx.accounts.initialize_loan(
             principal,
             interest_bps,
             collateral_mint,
             collateral_amount,
             due_ts,
             existing_user,
+        )?;
+        Ok(())
+    }
+
+    pub fn deposite(
+        ctx: Context<Deposit>,
+        amount:u64,
+        collateral_type:CollateralType,
+    ) -> Result<()>{
+        ctx.accounts.deposit(
+            amount, 
+            collateral_type
         )?;
         Ok(())
     }

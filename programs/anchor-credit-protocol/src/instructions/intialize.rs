@@ -45,7 +45,7 @@ pub struct Initialize<'info> {
 }
 
 impl<'info> Initialize<'info> {
-    pub fn initialize(
+    pub fn initialize_loan(
         &mut self,
         principal: u64,
         interest_bps: u16,
