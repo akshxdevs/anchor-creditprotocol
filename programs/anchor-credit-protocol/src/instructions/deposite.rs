@@ -23,6 +23,13 @@ pub struct Deposit<'info> {
     #[account(
         mut,
         associated_token::mint = mint,
+        associated_token::authority = user,
+    )]
+    pub user_token_account: Account<'info, TokenAccount>,
+
+    #[account(
+        mut,
+        associated_token::mint = mint,
         associated_token::authority = escrow,
     )]
     pub vault: Account<'info, TokenAccount>,
@@ -63,21 +70,14 @@ impl<'info> Deposit<'info> {
             .ok_or(CreditError::AmountOverflow)?;
         self.loan.collateral_type = collateral_type;
 
-        let cpi_program = self.system_program.to_account_info();
-        let cpi_accounts = Transfer{ 
-            from:self.escrow.to_account_info(),
-            to: self.user.to_account_info(),
-            authority: self.escrow.to_account_info()
+        // Transfer tokens from user to escrow vault
+        let cpi_program = self.token_program.to_account_info();
+        let cpi_accounts = Transfer {
+            from: self.user_token_account.to_account_info(),
+            to: self.vault.to_account_info(),
+            authority: self.user.to_account_info(),
         };
-        let user_key = self.user.key();
-        let seeds: &[&[u8]] = &[
-            b"escrow",
-            user_key.as_ref(),
-            &[self.escrow.bump],
-        ];
-
-        let signer_seeds = &[&seeds[..]];
-        let ctx = CpiContext::new_with_signer(cpi_program, cpi_accounts,signer_seeds);
+        let ctx = CpiContext::new(cpi_program, cpi_accounts);
         token::transfer(ctx, amount)?;
 
         Ok(())
