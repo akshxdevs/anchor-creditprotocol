@@ -4,7 +4,7 @@ use anchor_spl::{
     token::{Mint, Token, TokenAccount},
 };
 
-use crate::{CreditError, Escrow, Loan};
+use crate::{CreditError, Escrow, Loan, LoanList, UserProfile};
 
 #[derive(Accounts)]
 pub struct Initialize<'info> {
@@ -18,7 +18,7 @@ pub struct Initialize<'info> {
         payer = user,
         seeds = [b"escrow", user.key().as_ref()],
         bump,
-        space = Escrow::INIT_SPACE,
+        space = 8 + Escrow::INIT_SPACE,
     )]
     pub escrow: Account<'info, Escrow>,
 
@@ -35,9 +35,27 @@ pub struct Initialize<'info> {
         payer = user,
         seeds = [b"loan", user.key().as_ref()],
         bump,
-        space = Loan::INIT_SPACE,
+        space = 8 + Loan::INIT_SPACE,
     )]
     pub loan: Account<'info, Loan>,
+
+    #[account(
+        init,
+        payer = user,
+        seeds = [b"user_profile", user.key().as_ref()],
+        bump,
+        space = 8 + UserProfile::INIT_SPACE,
+    )]
+    pub user_profile: Account<'info, UserProfile>,
+
+    #[account(
+        init,
+        payer = user,
+        seeds = [b"loan_list", user.key().as_ref()],
+        bump,
+        space = 8 + LoanList::INIT_SPACE,
+    )]
+    pub loan_list: Account<'info, LoanList>,
 
     pub token_program: Program<'info, Token>,
     pub associated_token_program: Program<'info, AssociatedToken>,
@@ -80,7 +98,27 @@ impl<'info> Initialize<'info> {
             status: crate::LoanStatus::Requested,
             collateral_type: crate::CollateralType::YetToSet,
             existing_user,
+
         });
+
+        if self.user_profile.user == Pubkey::default() {
+            self.user_profile.user = self.user.key();
+            self.user_profile.total_loans_taken = 0;
+            self.user_profile.total_loans_repaid = 0;
+            self.user_profile.total_defaults = 0;
+            self.user_profile.reputation_score = 0;
+        }
+
+        self.user_profile.total_loans_taken = self
+            .user_profile
+            .total_loans_taken
+            .checked_add(1)
+            .ok_or(CreditError::AmountOverflow)?;
+        self.user_profile.last_loan_ts = clock;
+
+        if !self.loan_list.loan_list.contains(&self.loan.key()) {
+            self.loan_list.loan_list.push(self.loan.key());
+        }
 
         Ok(())
     }

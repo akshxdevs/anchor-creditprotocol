@@ -12,4 +12,8 @@ pub enum CreditError {
     InvalidCollateralMint,
     #[msg("Overflow error: amount exceeds maximum value")]
     AmountOverflow,
+    #[msg("User has pending defaults yet to settle")]
+    UserHasDefaults,
+    #[msg("User has no active loans found")]
+    NoActiveLoans,
 }

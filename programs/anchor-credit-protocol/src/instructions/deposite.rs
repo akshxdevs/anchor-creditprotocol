@@ -47,7 +47,7 @@ pub struct Deposit<'info> {
 }
 
 impl<'info> Deposit<'info> {
-    pub fn deposit(&mut self, amount: u64, collateral_type: CollateralType) -> Result<()> {
+    pub fn deposit_collateral(&mut self, amount: u64, collateral_type: CollateralType) -> Result<()> {
         require!(amount > 0, CreditError::InvalidAmount);
         require!(
             collateral_type != CollateralType::YetToSet,
@@ -70,7 +70,6 @@ impl<'info> Deposit<'info> {
             .ok_or(CreditError::AmountOverflow)?;
         self.loan.collateral_type = collateral_type;
 
-        // Transfer tokens from user to escrow vault
         let cpi_program = self.token_program.to_account_info();
         let cpi_accounts = Transfer {
             from: self.user_token_account.to_account_info(),

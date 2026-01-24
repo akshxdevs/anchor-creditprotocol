@@ -1,6 +1,7 @@
 use anchor_lang::prelude::*;
 
 #[account]
+#[derive(InitSpace)]
 pub struct UserProfile {
     pub user: Pubkey,
     pub total_loans_taken: u32,
@@ -9,6 +10,15 @@ pub struct UserProfile {
     pub reputation_score: u32,
     pub last_loan_ts: i64,
 }
+
+#[account]
+#[derive(InitSpace)]
+pub struct LoanList {
+    #[max_len(10)]
+    pub loan_list:Vec<Pubkey>,
+    pub loan_list_bump:u8
+}
+
 #[derive(Clone, AnchorDeserialize, AnchorSerialize, InitSpace)]
 pub enum UserTier {
     Tier0,
